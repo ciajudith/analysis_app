@@ -24,7 +24,9 @@ class _SplashScreenState extends State<SplashScreen> {
       ),
       nextScreen: const WelcomeScreen(),
       splashTransition: SplashTransition.fadeTransition,
-      animationDuration: const Duration(milliseconds: 1000),
+      animationDuration: const Duration(
+        milliseconds: 1000,
+      ),
       backgroundColor: AppColors.primaryColor,
       pageTransitionType: PageTransitionType.fade,
     );
