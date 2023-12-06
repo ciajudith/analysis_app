@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
       duration: 5000,
       splash: SvgPicture.asset(
         "assets/images/logo.svg",
-        height: MediaQuery.sizeOf(context).height * 0.08,
+        height: size.height * 0.08,
       ),
       nextScreen: const WelcomeScreen(),
       splashTransition: SplashTransition.fadeTransition,
