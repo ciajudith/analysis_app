@@ -6,9 +6,6 @@ import 'package:analysis_app/views/graph_view.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:sqflite/sqflite.dart';
-
-import '../models/database_manager.dart';
 
 class ScanQRView extends StatefulWidget {
   const ScanQRView({super.key});
@@ -21,6 +18,7 @@ class _ScanQRViewState extends State<ScanQRView> {
   Barcode? result;
   QRViewController? _controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  bool isNavigationCompleted = false;
 
   @override
   void initState() {
@@ -118,7 +116,6 @@ class _ScanQRViewState extends State<ScanQRView> {
             MediaQuery.of(context).size.height < 400)
         ? 150.0
         : 300.0;
-    // bool isNavigationPerformed = false;
 
     return QRView(
       key: qrKey,
@@ -147,11 +144,12 @@ class _ScanQRViewState extends State<ScanQRView> {
 
   void _onQRViewCreated(QRViewController controller) {
     _controller = controller;
+
     controller.scannedDataStream.listen((scanData) async {
       String? rawData = scanData.code;
       List<List<dynamic>> csvData = const CsvToListConverter().convert(rawData);
       List<String> headers = List.castFrom(csvData.first);
-      await _createTableInDatabase(headers);
+      // await _createTableInDatabase(headers);
       List<Map<String, dynamic>> rows = [];
       for (var row in csvData.skip(1)) {
         Map<String, dynamic> rowData = {};
@@ -160,37 +158,42 @@ class _ScanQRViewState extends State<ScanQRView> {
         }
         rows.add(rowData);
       }
-      await _insertDataIntoDatabase(headers, rows);
+      // await _insertDataIntoDatabase(headers, rows);
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GraphView(scannedData: rows),
-          ),
-        );
+        if (!isNavigationCompleted) {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GraphView(scannedData: rows),
+              ),
+            );
+          }
+          isNavigationCompleted = true;
+        }
       }
     });
   }
-
-  Future<void> _createTableInDatabase(List<String> headers) async {
-    Database db = await DatabaseManager.database;
-    String createTableQuery =
-        'CREATE TABLE IF NOT EXISTS information (id INTEGER PRIMARY KEY, ';
-    for (String header in headers) {
-      createTableQuery += '$header TEXT, ';
-    }
-    createTableQuery =
-        createTableQuery.substring(0, createTableQuery.length - 2);
-    createTableQuery += ')';
-    await db.execute(createTableQuery);
-  }
-
-  Future<void> _insertDataIntoDatabase(
-      List<String> headers, List<Map<String, dynamic>> rows) async {
-    Database db = await DatabaseManager.database;
-
-    for (var row in rows) {
-      await db.insert('information', row);
-    }
-  }
+//
+//   Future<void> _createTableInDatabase(List<String> headers) async {
+//     Database db = await DatabaseManager.database;
+//     String createTableQuery =
+//         'CREATE TABLE IF NOT EXISTS information (id INTEGER PRIMARY KEY, ';
+//     for (String header in headers) {
+//       createTableQuery += '$header TEXT, ';
+//     }
+//     createTableQuery =
+//         createTableQuery.substring(0, createTableQuery.length - 2);
+//     createTableQuery += ')';
+//     await db.execute(createTableQuery);
+//   }
+//
+//   Future<void> _insertDataIntoDatabase(
+//       List<String> headers, List<Map<String, dynamic>> rows) async {
+//     Database db = await DatabaseManager.database;
+//
+//     for (var row in rows) {
+//       await db.insert('information', row);
+//     }
+//   }
 }
