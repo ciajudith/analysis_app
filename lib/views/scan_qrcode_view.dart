@@ -118,7 +118,7 @@ class _ScanQRViewState extends State<ScanQRView> {
             MediaQuery.of(context).size.height < 400)
         ? 150.0
         : 300.0;
-    bool isNavigationPerformed = false;
+    // bool isNavigationPerformed = false;
 
     return QRView(
       key: qrKey,
