@@ -2,6 +2,7 @@ import 'package:analysis_app/constants/colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class GraphView extends StatefulWidget {
   final List<Map<String, dynamic>> scannedData;
@@ -14,17 +15,21 @@ class GraphView extends StatefulWidget {
 
 class _GraphViewState extends State<GraphView> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    Size size = MediaQuery.sizeOf(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scanned Data'),
+        title: Text(
+          'Données scannées',
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 20,
+            color: AppColors.primaryColor,
+            fontWeight: FontWeight.w700,
+            decorationStyle: TextDecorationStyle.solid,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -41,21 +46,19 @@ class _GraphViewState extends State<GraphView> {
                 ),
               ),
               SizedBox(
-                height: MediaQuery.sizeOf(context).height * 0.03,
+                height: size.height * 0.03,
               ),
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15, right: 15),
-                  child: SizedBox(
-                    height: MediaQuery.sizeOf(context).height * 0.4,
-                    child: _buildLineChart(
-                      widget.scannedData,
-                    ),
+              Padding(
+                padding: const EdgeInsets.only(left: 15, right: 15),
+                child: SizedBox(
+                  height: size.height * 0.4,
+                  child: _buildLineChart(
+                    widget.scannedData,
                   ),
                 ),
               ),
               SizedBox(
-                height: MediaQuery.sizeOf(context).height * 0.1,
+                height: size.height * 0.1,
               ),
             ],
           ),
@@ -65,7 +68,15 @@ class _GraphViewState extends State<GraphView> {
   }
 
   List<DataColumn> _buildTableColumns(List<String> headers) {
-    return headers.map((header) => DataColumn(label: Text(header))).toList();
+    return headers
+        .map(
+          (header) => DataColumn(
+            label: Text(
+              header,
+            ),
+          ),
+        )
+        .toList();
   }
 
   List<DataRow> _buildTableRows(List<Map<String, dynamic>> rows) {
@@ -88,18 +99,23 @@ class _GraphViewState extends State<GraphView> {
           show: true,
         ),
         titlesData: FlTitlesData(
-          show: false,
+          show: true,
           leftTitles: const AxisTitles(
             sideTitles: SideTitles(
-              showTitles: true,
-              interval: 1,
+              showTitles: false,
             ),
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
-              showTitles: true,
+              showTitles: false,
               getTitlesWidget: bottomTitleWidgets,
             ),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
           ),
         ),
         borderData: FlBorderData(show: true),
