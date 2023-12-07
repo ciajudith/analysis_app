@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:analysis_app/constants/colors.dart';
+import 'package:analysis_app/views/graph_view.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -117,6 +118,8 @@ class _ScanQRViewState extends State<ScanQRView> {
             MediaQuery.of(context).size.height < 400)
         ? 150.0
         : 300.0;
+    bool isNavigationPerformed = false;
+
     return QRView(
       key: qrKey,
       onQRViewCreated: _onQRViewCreated,
@@ -147,10 +150,7 @@ class _ScanQRViewState extends State<ScanQRView> {
     controller.scannedDataStream.listen((scanData) async {
       String? rawData = scanData.code;
       List<List<dynamic>> csvData = const CsvToListConverter().convert(rawData);
-      debugPrint(csvData.toString());
-
       List<String> headers = List.castFrom(csvData.first);
-      debugPrint(csvData.toString());
       await _createTableInDatabase(headers);
       List<Map<String, dynamic>> rows = [];
       for (var row in csvData.skip(1)) {
@@ -161,6 +161,15 @@ class _ScanQRViewState extends State<ScanQRView> {
         rows.add(rowData);
       }
       await _insertDataIntoDatabase(headers, rows);
+      debugPrint(rows.toString());
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GraphView(scannedData: rows),
+          ),
+        );
+      }
     });
   }
 
