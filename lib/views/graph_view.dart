@@ -40,14 +40,22 @@ class _GraphViewState extends State<GraphView> {
                   rows: _buildTableRows(widget.scannedData),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SizedBox(
-                  height: MediaQuery.sizeOf(context).height * 0.3,
-                  child: _buildLineChart(
-                    widget.scannedData,
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.03,
+              ),
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 15, right: 15),
+                  child: SizedBox(
+                    height: MediaQuery.sizeOf(context).height * 0.4,
+                    child: _buildLineChart(
+                      widget.scannedData,
+                    ),
                   ),
                 ),
+              ),
+              SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.1,
               ),
             ],
           ),
@@ -70,20 +78,36 @@ class _GraphViewState extends State<GraphView> {
 
   Widget _buildLineChart(List<Map<String, dynamic>> data) {
     List<Color> gradientColors = [
-      AppColors.primaryColor,
+      AppColors.teaGreenColor,
       AppColors.verdigrisColor,
     ];
 
     return LineChart(
       LineChartData(
-        gridData: const FlGridData(show: true),
-        titlesData: const FlTitlesData(show: false),
+        gridData: const FlGridData(
+          show: true,
+        ),
+        titlesData: FlTitlesData(
+          show: false,
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 1,
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: bottomTitleWidgets,
+            ),
+          ),
+        ),
         borderData: FlBorderData(show: true),
         lineBarsData: [
           LineChartBarData(
             spots: _generateChartData(data),
             isCurved: true,
-            color: AppColors.primaryColor,
+            color: AppColors.eggshellColor,
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
@@ -100,22 +124,17 @@ class _GraphViewState extends State<GraphView> {
   }
 
   List<FlSpot> _generateChartData(List<Map<String, dynamic>> data) {
-    // Extract all unique headers (columns) from the data
     Set<String> allHeaders = data.expand((entry) => entry.keys).toSet();
 
-    // Assuming the first column is the X-axis, and the rest are Y-axis
     String xHeader = allHeaders.elementAt(0);
     List<String> yHeaders = allHeaders.skip(1).toList();
 
-    // Create a map to store Y-axis data for each header
     Map<String, List<FlSpot>> chartData = {};
 
-    // Initialize the map with empty lists
     for (var header in yHeaders) {
       chartData[header] = [];
     }
 
-    // Populate the chart data
     for (var entry in data) {
       double xValue = entry[xHeader] is String
           ? _getNumericValue(entry[xHeader])
@@ -129,14 +148,12 @@ class _GraphViewState extends State<GraphView> {
       }
     }
 
-    // Sort the X-axis values
     List<double> xValues = chartData[yHeaders.first]!
         .map((flSpot) => flSpot.x)
         .toSet()
         .toList()
       ..sort();
 
-    // Create a list of FlSpot with sorted X-axis values
     List<FlSpot> result = [];
     for (var xValue in xValues) {
       for (var header in yHeaders) {
@@ -148,7 +165,6 @@ class _GraphViewState extends State<GraphView> {
       }
     }
 
-    // Adjust the X-axis values to ensure proper distribution
     for (var i = 0; i < result.length; i++) {
       result[i] = FlSpot(i.toDouble(), result[i].y);
     }
@@ -160,8 +176,6 @@ class _GraphViewState extends State<GraphView> {
     if (value is num) {
       return value.toDouble();
     } else if (value is String) {
-      // Increment a counter each time a string is encountered
-      // and use the counter as the X-axis value
       return _getNextStringXValue();
     } else {
       return 13.0;
@@ -171,8 +185,37 @@ class _GraphViewState extends State<GraphView> {
   int _stringXCounter = 0;
 
   double _getNextStringXValue() {
-    // Increment the counter and return it as a double
     _stringXCounter++;
     return _stringXCounter.toDouble();
+  }
+
+  Widget bottomTitleWidgets(double value, TitleMeta meta) {
+    const style = TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 16,
+    );
+    List<String> xValuesStrings = widget.scannedData.map((entry) {
+      return _extractXAxisData(entry);
+    }).toList();
+    Widget text;
+    int index = value.toInt();
+
+    if (index >= 0 && index < xValuesStrings.length) {
+      text = Text(xValuesStrings[index], style: style);
+    } else {
+      text = const Text('', style: style);
+    }
+
+    return SideTitleWidget(
+      axisSide: meta.axisSide,
+      child: text,
+    );
+  }
+
+  String _extractXAxisData(Map<String, dynamic> entry) {
+    Set<String> allHeaders =
+        widget.scannedData.expand((entry) => entry.keys).toSet();
+    String xHeader = allHeaders.elementAt(0);
+    return entry[xHeader].toString();
   }
 }
