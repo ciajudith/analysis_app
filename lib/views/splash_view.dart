@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> {
         "assets/images/logo.svg",
         height: size.height * 0.08,
       ),
-      nextScreen: const WelcomeScreen(),
+      nextScreen: const Scaffold(body: WelcomeScreen()),
       splashTransition: SplashTransition.fadeTransition,
       animationDuration: const Duration(
         milliseconds: 1000,

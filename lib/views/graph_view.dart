@@ -1,6 +1,7 @@
 import 'package:analysis_app/constants/colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class GraphView extends StatefulWidget {
   final List<Map<String, dynamic>> scannedData;
@@ -19,9 +20,11 @@ class _GraphViewState extends State<GraphView> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Scanned Data'),
+        title: const Text('Scanned Data'),
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -39,7 +42,12 @@ class _GraphViewState extends State<GraphView> {
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: _buildLineChart(widget.scannedData),
+                child: SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.3,
+                  child: _buildLineChart(
+                    widget.scannedData,
+                  ),
+                ),
               ),
             ],
           ),
@@ -61,17 +69,30 @@ class _GraphViewState extends State<GraphView> {
   }
 
   Widget _buildLineChart(List<Map<String, dynamic>> data) {
+    List<Color> gradientColors = [
+      AppColors.primaryColor,
+      AppColors.verdigrisColor,
+    ];
+
     return LineChart(
       LineChartData(
-        gridData: FlGridData(show: false),
-        titlesData: FlTitlesData(show: false),
+        gridData: const FlGridData(show: true),
+        titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: true),
         lineBarsData: [
           LineChartBarData(
             spots: _generateChartData(data),
             isCurved: true,
             color: AppColors.primaryColor,
-            belowBarData: BarAreaData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: gradientColors,
+              ),
+            ),
+            gradient: LinearGradient(
+              colors: gradientColors,
+            ),
           ),
         ],
       ),
@@ -90,41 +111,68 @@ class _GraphViewState extends State<GraphView> {
     Map<String, List<FlSpot>> chartData = {};
 
     // Initialize the map with empty lists
-    yHeaders.forEach((header) {
+    for (var header in yHeaders) {
       chartData[header] = [];
-    });
+    }
 
     // Populate the chart data
-    data.forEach((entry) {
+    for (var entry in data) {
       double xValue = entry[xHeader] is String
           ? _getNumericValue(entry[xHeader])
           : entry[xHeader].toDouble();
 
-      yHeaders.forEach((header) {
+      for (var header in yHeaders) {
         double yValue = entry[header] is String
             ? _getNumericValue(entry[header])
             : entry[header].toDouble();
         chartData[header]!.add(FlSpot(xValue, yValue));
-      });
-    });
+      }
+    }
 
-    // Merge all lists into a single list for the chart
+    // Sort the X-axis values
+    List<double> xValues = chartData[yHeaders.first]!
+        .map((flSpot) => flSpot.x)
+        .toSet()
+        .toList()
+      ..sort();
+
+    // Create a list of FlSpot with sorted X-axis values
     List<FlSpot> result = [];
-    yHeaders.forEach((header) {
-      result.addAll(chartData[header]!);
-    });
+    for (var xValue in xValues) {
+      for (var header in yHeaders) {
+        var spot = chartData[header]!.firstWhere(
+          (flSpot) => flSpot.x == xValue,
+          orElse: () => FlSpot(xValue, 0.0),
+        );
+        result.add(spot);
+      }
+    }
+
+    // Adjust the X-axis values to ensure proper distribution
+    for (var i = 0; i < result.length; i++) {
+      result[i] = FlSpot(i.toDouble(), result[i].y);
+    }
 
     return result;
   }
 
-// Function to handle different types and convert to double
   double _getNumericValue(dynamic value) {
     if (value is num) {
       return value.toDouble();
     } else if (value is String) {
-      return double.tryParse(value) ?? 0.0;
+      // Increment a counter each time a string is encountered
+      // and use the counter as the X-axis value
+      return _getNextStringXValue();
     } else {
-      return 0.0;
+      return 13.0;
     }
+  }
+
+  int _stringXCounter = 0;
+
+  double _getNextStringXValue() {
+    // Increment the counter and return it as a double
+    _stringXCounter++;
+    return _stringXCounter.toDouble();
   }
 }

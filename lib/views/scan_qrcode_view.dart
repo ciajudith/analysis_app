@@ -161,7 +161,6 @@ class _ScanQRViewState extends State<ScanQRView> {
         rows.add(rowData);
       }
       await _insertDataIntoDatabase(headers, rows);
-      debugPrint(rows.toString());
       if (mounted) {
         Navigator.pushReplacement(
           context,
